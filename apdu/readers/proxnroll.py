@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-#Copyright (C) 2014  Jonathan Delvaux <apdu@djoproject.net>
+#Copyright (C) 2014 Jonathan Delvaux <apdu@djoproject.net>
 
 #This program is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -16,44 +16,70 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#from arg.args import Executer
-#from arg.argchecker import *
-#from apdu.apduExecuter import *
-
 from apdu.standard.iso7816_4 import iso7816_4APDUBuilder
 from apdu.misc.apdu import ApduDefault
-from apdu.exception.exception import apduBuilderException,apduAnswserException
-from smartcard.sw.SWExceptions import CheckingErrorException
-
-
-#from rfid.util import getPIXSS, getPIXNN
-#from rfidDefault import printATR
-#from pcscAddon import pcscAPDUBuilder
-
-
-#TODO
-    #remove use of KeyName, directly use a key, the keyname will be managed elsewhere
-    #put the values in dico
-
+from apdu.misc.util import getPIXSS, getPIXNN
+from apdu.misc.exception import apduBuilderException,apduAnswserException
+from apdu.library.pcsc import pcscAPDUBuilder
 
 class ProxnrollAPDUBuilder(pcscAPDUBuilder):
     proxnrollSW = {
-        0x68:(CheckingErrorException, 
-            {0x00: "CLA byte is not correct"}),
-        0x69:(CheckingErrorException, 
-            {0x86: "Volatile memory is not available or key type is not valid",
-             0x87: "Non-volatile memory is not available",
-             0x88: "Key number is not valid",
-             0x89: "Key length is not valid"}),
-        0x6C:(CheckingErrorException, 
-            {None: "Wrong length (Le is shorter than data length, XX in SW2 gives the correct value)"}),
-        0x6F:(CheckingErrorException, 
-            {0x00: "Card mute (or removed)",
-             0xE7: "SAM didn't answer with 9000 (maybe this is not a Calypso SAM !)",
-             None: "Error code returned by the Gemcore"})
-        
-        #TODO there is a lot of other error code in the doc
-    }
+        0x62:{0x82: "End of data reached before Le bytes (Le is greater than data length)"},
+        0x63:{0x00: "Error reported by the contactless interface (when high-order bit of P2 is 1)."},
+        0x67:{0x00: "Wrong length (Lc incoherent)"},
+        0x68:{0x00: "CLA byte is not correct"},
+        0x69:{0x81: "Command incompatible",
+              0x82: "Security status not satisfied or CRYPTO1 authentication failed",
+              0x86: "Volatile memory is not available or key type is not valid",
+              0x87: "Non-volatile memory is not available",
+              0x88: "Key number is not valid",
+              0x89: "Key length is not valid"},
+        0x6A:{0x81: "Function not supported (INS byte is not correct), or not available for the selected PICC/VICC",
+              0x82: "Wrong address (no such block or no such offset in the PICC/VICC)",
+              0x84: "Wrong length (trying to write too much data at once)"},
+        0x6B:{0x00: "Wrong parameter P1 or/and P2"},
+        0x6C:{None: "Wrong length (Le is shorter than data length, XX in SW2 gives the correct value)"},
+        0x6F:{0x00: "No answer received (no card in the field, or card is mute)",
+              0x01: "PICC/VICC mute or removed during the transfer",
+              0x02: "CRC error in card's answer",
+              0x04: "Card authentication failed",
+              0x05: "Parity error in card's answer",
+              0x06: "Invalid card response opcode",
+              0x07: "Bad anti-collision sequence",
+              0x08: "Card's serial number is invalid",
+              0x09: "Card or block locked",
+              0x0A: "Card operation denied, must be authenticated first",
+              0x0B: "Wrong number of bits in card's answer",
+              0x0C: "Wrong number of bytes in card's answer",
+              0x0D: "Card counter error",
+              0x0E: "Card transaction error",
+              0x0F: "Card write error",
+              0x10: "Card counter increment error",
+              0x11: "Card counter decrement error",
+              0x12: "Card read error",
+              0x13: "RC: FIFO overflow",
+              0x15: "Framing error in card's answer",
+              0x16: "Card access error",
+              0x17: "RC: unknown opcode",
+              0x18: "A collision has occurred",
+              0x19: "RC: command execution failed",
+              0x1A: "RC: hardware failure",
+              0x1B: "RC: timeout",
+              0x1C: "Anti-collision not supported by the card(s)",
+              0x1F: "Bad card status",
+              0x20: "Card: vendor specific error",
+              0x21: "Card: command not supported",
+              0x22: "Card: format of command invalid",
+              0x23: "Card: option of command invalid",
+              0x24: "Card: other error",
+              0x3C: "Reader: invalid parameter",
+              0x64: "Reader: invalid opcode",
+              0x70: "Reader: internal buffer overflow",
+              0x7D: "Reader: invalid length",
+              0xE7: "SAM didn't answer with 9000 (maybe this is not a Calypso SAM !)",
+              None: "Error code returned by the Gemcore"}}
+    
+    ##
 
     colorOFF   = 0x00
     colorON    = 0x01
@@ -62,7 +88,100 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
     colorQUICK = 0x04
     colorBEAT  = 0x05
     
-    ColorSettings = {} #TODO put in dico
+    ColorSettings = {"colorOFF"  :colorOFF,
+                     "colorON"   :colorON,
+                     "colorSLOW" :colorSLOW,
+                     "colorAUTO" :colorAUTO,
+                     "colorQUICK":colorQUICK,
+                     "colorBEAT" :colorBEAT}
+
+    ##
+    
+    protocolType_ISO14443_TCL         = 0x00
+    protocolType_ISO14443A            = 0x01
+    protocolType_ISO14443B            = 0x02
+    protocolType_ISO15693             = 0x04
+    protocolType_ISO15693_WithUID     = 0x05
+    protocolType_ISO14443A_WithoutCRC = 0x09
+    protocolType_ISO14443B_WithoutCRC = 0x0A
+    protocolType_ISO15693_WithoutCRC  = 0x0C
+    
+    protocolType = {"ISO14443_TCL"        :protocolType_ISO14443_TCL,
+                    "ISO14443A"           :protocolType_ISO14443A,
+                    "ISO14443B"           :protocolType_ISO14443B,
+                    "ISO15693"            :protocolType_ISO15693,
+                    "ISO15693_WithUID"    :protocolType_ISO15693_WithUID,
+                    "ISO14443A_WithoutCRC":protocolType_ISO14443A_WithoutCRC,
+                    "ISO14443B_WithoutCRC":protocolType_ISO14443B_WithoutCRC,
+                    "ISO15693_WithoutCRC" :protocolType_ISO15693_WithoutCRC}
+    
+    ##
+    
+    lastByte_Complete_WithoutCRC  = 0x0F
+    lastByte_With1bits_WithoutCRC = 0x1F
+    lastByte_With2bits_WithoutCRC = 0x2F
+    lastByte_With3bits_WithoutCRC = 0x3F
+    lastByte_With4bits_WithoutCRC = 0x4F
+    lastByte_With5bits_WithoutCRC = 0x5F
+    lastByte_With6bits_WithoutCRC = 0x6F
+    lastByte_With7bits_WithoutCRC = 0x7F
+    
+    lastByte = {"complete":lastByte_Complete_WithoutCRC,
+                "1bits"   :lastByte_With1bits_WithoutCRC,
+                "2bits"   :lastByte_With2bits_WithoutCRC,
+                "3bits"   :lastByte_With3bits_WithoutCRC,
+                "4bits"   :lastByte_With4bits_WithoutCRC,
+                "5bits"   :lastByte_With5bits_WithoutCRC,
+                "6bits"   :lastByte_With6bits_WithoutCRC,
+                "7bits"   :lastByte_With7bits_WithoutCRC}
+    
+    ##
+    
+    redirectionToMainSlot = 0x80
+    redirectionTo1stSlot  = 0x81
+    redirectionTo2ndSlot  = 0x82
+    redirectionTo3rdSlot  = 0x83
+    redirectionTo4stSlot  = 0x84
+    
+    redirection = {"MainSlot":redirectionToMainSlot,
+                   "1stSlot" :redirectionTo1stSlot,
+                   "2ndSlot" :redirectionTo2ndSlot,
+                   "3rdSlot" :redirectionTo3rdSlot,
+                   "4stSlot" :redirectionTo4stSlot}
+    
+    ##
+    
+    timeoutDefault = 0x00
+    timeout1ms     = 0x01
+    timeout2ms     = 0x02
+    timeout4ms     = 0x03
+    timeout8ms     = 0x04
+    timeout16ms    = 0x05
+    timeout32ms    = 0x06
+    timeout65ms    = 0x07
+    timeout125ms   = 0x08
+    timeout250ms   = 0x09
+    timeout500ms   = 0x0A
+    timeout1s      = 0x0B
+    timeout2s      = 0x0C
+    timeout4s      = 0x0D
+    
+    timeout = {"Default":timeoutDefault,
+               "1ms"    :timeout1ms,
+               "2ms"    :timeout2ms,
+               "4ms"    :timeout4ms,
+               "8ms"    :timeout8ms,
+               "16ms"   :timeout16ms,
+               "32ms"   :timeout32ms,
+               "65ms"   :timeout65ms,
+               "125ms"  :timeout125ms,
+               "250ms"  :timeout250ms,
+               "500ms"  :timeout500ms,
+               "1s"     :timeout1s,
+               "2s"     :timeout2s,
+               "4s"     :timeout4s}
+
+    ###################
 
     @staticmethod
     def getErrorMessageFromSW(sw1,sw2):
@@ -111,62 +230,14 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
             raise apduBuilderException("invalid argument datas, a value list of length 0 to 255 was expected, got "+str(len(datas)))
         
         return ApduDefault(cla=0xFF,ins=0xFD,p1=expected_answer_size,p2=delay_to_answer,data=datas)
-    
-    ###
-    protocolType_ISO14443_TCL = 0x00
-    protocolType_ISO14443A = 0x01
-    protocolType_ISO14443B = 0x02
-    protocolType_ISO15693 = 0x04
-    protocolType_ISO15693_WithUID = 0x05
-    protocolType_ISO14443A_WithoutCRC = 0x09
-    protocolType_ISO14443B_WithoutCRC = 0x0A
-    protocolType_ISO15693_WithoutCRC = 0x0C
-    
-    #TODO put in dico
-    
-    lastByte_Complete_WithoutCRC = 0x0F
-    lastByte_With1bits_WithoutCRC = 0x1F
-    lastByte_With2bits_WithoutCRC = 0x2F
-    lastByte_With3bits_WithoutCRC = 0x3F
-    lastByte_With4bits_WithoutCRC = 0x4F
-    lastByte_With5bits_WithoutCRC = 0x5F
-    lastByte_With6bits_WithoutCRC = 0x6F
-    lastByte_With7bits_WithoutCRC = 0x7F
-    
-    #TODO put in dico
-    
-    redirectionToMainSlot = 0x80
-    redirectionTo1stSlot = 0x81
-    redirectionTo2ndSlot = 0x82
-    redirectionTo3rdSlot = 0x83
-    redirectionTo4stSlot = 0x84
-    
-    #TODO put in dico
-    
-    timeoutDefault = 0x00
-    timeout1ms = 0x01
-    timeout2ms = 0x02
-    timeout4ms = 0x03
-    timeout8ms = 0x04
-    timeout16ms = 0x05
-    timeout32ms = 0x06
-    timeout65ms = 0x07
-    timeout125ms = 0x08
-    timeout250ms = 0x09
-    timeout500ms = 0x0A
-    timeout1s = 0x0B
-    timeout2s = 0x0C
-    timeout4s = 0x0D
-    
-    #TODO put in dico
-    
-    
-    #TODO BUG : avec un mauvais protocole, le reader renvoit 0x6f 0x47, code non defini...
+
+    #FIXME : avec un mauvais protocole, le reader renvoit 0x6f 0x47, code non defini...
     #           et ca renvoit 0x6f 0x01 quand ca reussi avec les ultralight...
     @staticmethod
     def encapsulate(datas,protocolType=0x00,timeoutType=0x00,defaultSW = True):
         
-        #TODO limite de 255
+        if len(datas) < 1 or len(datas) > 255:
+            raise apduBuilderException("invalid data size, a value between 1 and 255 was expected, got "+str(len(datas)))
         
         if timeoutType < 0 or timeoutType > 0x0D:
             raise apduBuilderException("invalid argument timeoutType, a value between 0 and 13 was expected, got "+str(timeoutType))
@@ -234,13 +305,10 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
     ###          
     
     @staticmethod
-    def loadKey(KeyIndex,KeyName,InVolatile = True ,isTypeA = True):
-        if KeyName not in keys:
-            raise apduBuilderException("the key name doesn't exist "+str(KeyName))
-        
+    def loadKey(KeyIndex,Key,InVolatile = True ,isTypeA = True):
         #only allow mifare key
-        if len(keys[KeyName]) != 6:
-            raise apduBuilderException("invalid key length, must be 6, got "+str(len(keys[KeyName])))
+        if len(Key) != 6:
+            raise apduBuilderException("invalid key length, must be 6, got "+str(len(Key)))
 
         #proxnroll specific params
         if InVolatile:
@@ -254,7 +322,7 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
         if not isTypeA:
             KeyIndex &= 0x10
             
-        return pcscAPDUBuilder.loadKey(KeyIndex,KeyName,InVolatile)
+        return pcscAPDUBuilder.loadKey(KeyIndex,Key,InVolatile)
         
     @staticmethod
     def generalAuthenticate(blockNumber,KeyIndex,InVolatile = True ,isTypeA = True):
@@ -270,39 +338,27 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
         else:
             if KeyIndex < 0 or KeyIndex > 15:
                 raise apduBuilderException("invalid argument KeyIndex, a value between 0 and 15 was expected, got "+str(KeyIndex))
-            
-        #if isTypeA:
-        #    datas = [0x01,0x00,blockNumber,0x60,KeyIndex]
-        #else:
-        #    datas = [0x01,0x00,blockNumber,0x61,KeyIndex]
-        #    
-        ap = pcscAPDUBuilder.generalAuthenticate(blockNumber,KeyIndex,InVolatile,isTypeA)
-        
+
+        ap = pcscAPDUBuilder.generalAuthenticate(blockNumber,KeyIndex,InVolatile,isTypeA)        
         ap.setIns(0x88)
      
         return ap
         
     @staticmethod
-    def mifareClassicRead(blockNumber,KeyName = None):
+    def mifareClassicRead(blockNumber,Key = None):
         if blockNumber < 0 or blockNumber > 255:
             raise apduBuilderException("invalid argument blockNumber, a value between 0 and 255 was expected, got "+str(blockNumber))
         
-        if KeyName == None:
+        if Key == None:
             return ApduDefault(cla=0xFF,ins=0xF3,p1=0x00,p2=blockNumber)
         else:
-            if KeyName not in keys:
-                raise apduBuilderException("the key name doesn't exist "+str(KeyName))
-
-            if len(keys[KeyName]) != 6:
-                raise apduBuilderException("invalid key length, must be 6, got "+str(len(keys[KeyName])))
-            
-            #if len(KeyName) != 6:
-            #    raise apduBuilderException("invalid key size, must be 6, got "+str(len(KeyName)))
+            if len(Key) != 6:
+                raise apduBuilderException("invalid key length, must be 6, got "+str(len(Key)))
                 
-            return ApduDefault(cla=0xFF,ins=0xF3,p1=0x00,p2=blockNumber,data=keys[KeyName])
+            return ApduDefault(cla=0xFF,ins=0xF3,p1=0x00,p2=blockNumber,data=Key)
         
     @staticmethod
-    def mifareClassifWrite(blockNumber,datas,KeyName = None):
+    def mifareClassifWrite(blockNumber,datas,Key = None):
         if blockNumber < 0 or blockNumber > 255:
             raise apduBuilderException("invalid argument blockNumber, a value between 0 and 255 was expected, got "+str(blockNumber))
 
@@ -312,21 +368,15 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
         if (len(datas) % 16) != 0:
             raise apduBuilderException("invalid datas size, must be a multiple of 16")
 
-        if KeyName == None:
+        if Key == None:
             return ApduDefault(cla=0xFF,ins=0xF4,p1=0x00,p2=blockNumber,data=datas)
         else:
-            if KeyName not in keys:
-                raise apduBuilderException("the key name doesn't exist "+str(KeyName))
-
-            if len(keys[KeyName]) != 6:
-                raise apduBuilderException("invalid key length, must be 6, got "+str(len(keys[KeyName])))
+            if len(Key) != 6:
+                raise apduBuilderException("invalid key length, must be 6, got "+str(len(Key)))
             
-            #if len(KeyName) != 6:
-            #    raise apduBuilderException("invalid key size, must be 6, got "+str(len(KeyName)))
-        
             toSend = []
             toSend.extend(datas)
-            toSend.extend(keys[KeyName])
+            toSend.extend(Key)
             return ApduDefault(cla=0xFF,ins=0xF4,p1=0x00,p2=blockNumber,data=toSend)
         
     

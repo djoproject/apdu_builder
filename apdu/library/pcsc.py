@@ -18,7 +18,7 @@
 
 from apdu.standard.iso7816_4 import iso7816_4APDUBuilder
 from apdu.misc.apdu import ApduDefault, ApduRaw
-from apdu.exception.exception import apduBuilderException
+from apdu.misc.exception import apduBuilderException
 
 class pcscAPDUBuilder(iso7816_4APDUBuilder):
     @staticmethod 
