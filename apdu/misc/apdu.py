@@ -23,8 +23,6 @@ class ApduBuilder(object):
     @staticmethod
     def getErrorMessageFromSW(sw1,sw2):
         return "unknown error, sw1="+str(sw1)+" sw2="+str(sw2)    
-    
-    
 
 PACK = 1
 HEX = 2
@@ -82,6 +80,8 @@ class ApduDefault(Apdu):
         if len(data) > 0:
             self.append(len(data))
             self.extend(data)
+        
+        #TODO check expected_answer size
         
         self.append(expected_answer)
 
