@@ -61,14 +61,14 @@ class MifareUltralightAPDUBuilder(object):
     
     @staticmethod
     def readSector(address=0):
-        if address < 0 or address > 0x0F:
+        if address < 0 or address > 0xFF: #TODO
             raise apduBuilderException("invalid argument address, a value between 0 and 15 was expected, got "+str(address))
         
         return ApduMifareUltralight(ins=0x30,param=(address&0xFF))
     
     @staticmethod
     def writeSector(datas, address=0):
-        if address < 0 or address > 0x0F:
+        if address < 0 or address > 0xFF: #TODO
             raise apduBuilderException("invalid argument address, a value between 0 and 15 was expected, got "+str(address))
         
         if len(datas) != 4:

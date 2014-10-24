@@ -40,7 +40,7 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
         0x6B:{0x00: "Wrong parameter P1 or/and P2"},
         0x6C:{None: "Wrong length (Le is shorter than data length, XX in SW2 gives the correct value)"},
         0x6F:{0x00: "No answer received (no card in the field, or card is mute)",
-              0x01: "PICC/VICC mute or removed during the transfer",
+              0x01: "PICC/VICC mute or removed during the transfer", #TODO give a hint, maybe slow down the process or increase timeout in transmit
               0x02: "CRC error in card's answer",
               0x04: "Card authentication failed",
               0x05: "Parity error in card's answer",
@@ -106,10 +106,10 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
     protocolType_ISO14443B_WithoutCRC = 0x0A
     protocolType_ISO15693_WithoutCRC  = 0x0C
     
-    protocolType = {"ISO14443_TCL"        :protocolType_ISO14443_TCL,
+    protocolType = {"ISO14443_TCL"        :protocolType_ISO14443_TCL,  #TODO be named 14443_default
                     "ISO14443A"           :protocolType_ISO14443A,
                     "ISO14443B"           :protocolType_ISO14443B,
-                    "ISO15693"            :protocolType_ISO15693,
+                    "ISO15693"            :protocolType_ISO15693, #TODO be named 15693_default
                     "ISO15693_WithUID"    :protocolType_ISO15693_WithUID,
                     "ISO14443A_WithoutCRC":protocolType_ISO14443A_WithoutCRC,
                     "ISO14443B_WithoutCRC":protocolType_ISO14443B_WithoutCRC,
