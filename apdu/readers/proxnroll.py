@@ -264,7 +264,7 @@ class ProxnrollAPDUBuilder(pcscAPDUBuilder):
         if len(toParse) != 3:
             raise apduAnswserException("(proxnroll) parseDataCardType, 3 bytes waited, got "+str(len(toParse)))
         
-        print "Procole : "+getPIXSS(toParse[0]) + ", Type : " +getPIXNN((toParse[1] << 8) + toParse[2])  
+        return getPIXSS(toParse[0]), getPIXNN((toParse[1] << 8) + toParse[2]) 
 
     @staticmethod
     def getDataCardShortSerialNumber():

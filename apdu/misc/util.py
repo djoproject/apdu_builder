@@ -175,7 +175,7 @@ def getPIXSS(value):
     elif (value == 0x0F): return "Contact (7816-10) 2WBP"
     elif (value == 0x10): return "Contact (7816-10) 3WBP"
     elif (value == 0xF0): return "ICODE EPC"
-    else: return "Unknonw Value"
+    else: return "Unknonw Value %.x"%value
     
 def getPIXNN(value):
     if (value == 0x0001): return "NXP Mifare Standard 1k"
@@ -246,4 +246,4 @@ def getPIXNN(value):
     elif (value == 0xFFE1): return "NXP ICODE UID-OTP"
     elif (value == 0xFFE2): return "Unidentified EPC card"
     elif (value == 0xFFFF): return "Virtual card (test only)"
-    else: return "Unknonw Value"
+    else: return "Unknonw Value %.x"%value
