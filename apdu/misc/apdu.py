@@ -71,9 +71,9 @@ class Apdu(list):
     
     def __str__(self):
         return toHexString(self)
-        
+
 class ApduDefault(Apdu):
-    "apdu abstract class"
+    "apdu default class"
     def __init__(self,cla,ins,p1=0,p2=0,data=[],expected_answer=0):
         self.extend([cla,ins,p1,p2])
         
@@ -84,14 +84,23 @@ class ApduDefault(Apdu):
         #TODO check expected_answer size
         
         self.append(expected_answer)
+        self.expectedAnswerExist = True
 
     def setIns(ins):
         #TODO check the self size
         self[1] = ins
 
-    #def getSize(self):
-    #    "return the length of the command"
-    #    return len(self.table)
+    def setExpectedAnswer(self, value):
+        if self.expectedAnswerExist:
+            self[-1] = value
+        else:
+            self.append(value)
+            self.expectedAnswerExist = True
+
+    def removeExpectedAnswer(self):
+        if self.expectedAnswerExist:
+            del self[-1]
+            self.expectedAnswerExist = False
 
     #def toHexArray(self):
     #    "return the command into a byte array"
@@ -101,10 +110,6 @@ class ApduRaw(Apdu):
     def __init__(self,rawByte):
         self.extend(rawByte)
         
-    #def getSize(self):
-    #    "return the length of the command"
-    #    return len(self.rawByte)
-
     #def toHexArray(self):
     #    "return the command into a byte array"
     #    return self.rawByte
